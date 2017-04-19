@@ -1,0 +1,58 @@
+
+POST http://localhost:3000/users/register
+content-type: application/json
+
+{
+  "name": "Edsger W. Dijkstra",
+  "email": "ro@xrem.net",
+  "luckyNumber": 7,
+  "password": "abdef"
+}
+
+####
+
+
+POST http://localhost:3000/users/login
+content-type: application/json
+
+{
+  "email": "ro@xrem.net",
+  "password": "abdef"
+}
+
+
+####
+
+POST http://localhost:3000/users/search
+content-type: application/json
+x-authorization: foooo
+
+{
+    "query": "xrem"
+}
+
+
+####
+
+POST http://localhost:3000/users/search
+content-type: application/json
+x-authorization: dbdea4e4-5ed7-4eaf-b3e7-808173118ae1
+
+{
+    "query": "xredsadam"
+}
+
+####
+
+PUT http://localhost:3000/users/logout
+x-authorization: 3d534ef7-a737-48d5-ad91-1d8bcd6a5dc6
+
+
+
+#### 
+
+
+PUT http://localhost:3000/users/logout
+x-authorization: cafebabe
+
+
