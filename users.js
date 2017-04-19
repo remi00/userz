@@ -15,24 +15,45 @@ passport.use(new BasicStrategy(
     // verify if we have user there...
   }));
 
-const userSessions = [];
+// this relies on nodejs' caching mechanism for dependencies resolved with require()
+// ie. we know it is executed only once, if this module was required multiple times
+let userSessions = null;
+
+(async () => {
+  const files = await fsp.readdir(usersDir);
+  Promise.all(files
+    // ignore no json files
+    .filter(f => f.endsWith('.json'))
+    // produce promises for reading the files
+    .map(f => fsp.readJson(path.join(usersDir, f))))
+    // once all is read, initialize the global dictionary
+    .then(us => (userSessions = us));
+})();
+
+
+// a middleware to prevent access while JSON files are being read (initalization of a service)
+router.use((req, res, next) => {
+  if (userSessions === null) {
+    return res.status(202).json({ message: 'Please try again, service initialization in progress' });
+  }
+  return next();
+});
 
 // define the home page route
 router.post('/register', async (req, res) => {
   const user = req.body;
   if (user.name && user.email && user.luckyNumber && user.password) {
     const session = uuid.v4();
-    const writeRes = await fsp.writeFile(path.join(usersDir, `${session}.json`),
-        // TODO: MD5/SHA for password whatever!
-        JSON.stringify({
-          name: user.name,
-          email: user.email,
-          luckyNumber: user.luckyNumber,
-          password: user.password,
-        }));
+
+    // TODO: MD5/SHA for password whatever!
+    await fsp.writeJson(path.join(usersDir, `${session}.json`), {
+      name: user.name,
+      email: user.email,
+      luckyNumber: user.luckyNumber,
+      password: user.password,
+    });
     // TODO: check unique!
     userSessions.push({ email: user.email, name: user.name, file: session });
-    console.log('userSessions: ', userSessions);
     res.json({ message: 'User registered' });
   } else {
     res.status(400).end();

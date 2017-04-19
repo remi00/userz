@@ -24,7 +24,7 @@ If email and lucky number are unique user should be stored in a file `88771a2c-1
 
 JWT or node authentication with passport npm package can be used here. 
 ```
-  {.map
+  {
   email: "dijkstra@utexas.edu",
   password: "ipdPza9szGWMKgVA"
   }
