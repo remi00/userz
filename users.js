@@ -4,6 +4,7 @@ const passport = require('passport');
 const fsp = require('fs-promise');
 const path = require('path');
 const BasicStrategy = require('passport-http').BasicStrategy;
+const crypto = require('crypto');
 
 const router = express.Router();
 
@@ -30,7 +31,6 @@ let userSessions = null;
     .then(us => (userSessions = us));
 })();
 
-
 // a middleware to prevent access while JSON files are being read (initalization of a service)
 router.use((req, res, next) => {
   if (userSessions === null) {
@@ -43,17 +43,24 @@ router.use((req, res, next) => {
 router.post('/register', async (req, res) => {
   const user = req.body;
   if (user.name && user.email && user.luckyNumber && user.password) {
-    const session = uuid.v4();
+    const userFile = uuid.v4();
+    const hash = crypto.createHash('sha256');
+    hash.update(user.password);
 
-    // TODO: MD5/SHA for password whatever!
-    await fsp.writeJson(path.join(usersDir, `${session}.json`), {
+    await fsp.writeJson(path.join(usersDir, `${userFile}.json`), {
       name: user.name,
       email: user.email,
       luckyNumber: user.luckyNumber,
-      password: user.password,
+      password: hash.digest('hex'),
     });
+
     // TODO: check unique!
-    userSessions.push({ email: user.email, name: user.name, file: session });
+    userSessions.push({
+      email: user.email,
+      name: user.name,
+      luckyNumber: user.luckyNumber,
+      file: userFile,
+    });
     res.json({ message: 'User registered' });
   } else {
     res.status(400).end();
@@ -62,16 +69,19 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   const login = req.body;
-  if (login.email && login.password && userSessions) {
+  if (login.email && login.password) {
     const userSession = userSessions.find(s => (s.email === login.email));
     if (userSession) {
       let userData;
       try {
-        userData = JSON.parse(await fsp.readFile(path.join(usersDir, `${userSession.file}.json`)));
-        if (userData && userData.password && userData.password === login.password) {
+        userData = await fsp.readJson(path.join(usersDir, `${userSession.file}.json`));
+        const hash = crypto.createHash('sha256');
+        hash.update(login.password);
+
+        if (userData && userData.password && userData.password === hash.digest('hex')) {
           const sessionId = uuid.v4();
           userSession.session = sessionId;
-          return res.status(200).json({message: "Logged in", session: sessionId });
+          return res.status(200).json({ message: 'Logged in', session: sessionId });
         }
       } catch (err) {
         console.log(err)

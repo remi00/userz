@@ -17,7 +17,7 @@ content-type: application/json
 
 {
   "email": "ro@xrem.net",
-  "password": "abdef"
+  "password": "abd"
 }
 
 
@@ -36,7 +36,7 @@ x-authorization: foooo
 
 POST http://localhost:3000/users/search
 content-type: application/json
-x-authorization: 4c617d2b-33a3-495e-959e-db10ff3eb130
+x-authorization: e2f733a1-ec0b-47ff-be1b-d109551c93b4
 
 {
     "query": "x"
@@ -45,7 +45,7 @@ x-authorization: 4c617d2b-33a3-495e-959e-db10ff3eb130
 ####
 
 PUT http://localhost:3000/users/logout
-x-authorization: 4c617d2b-33a3-495e-959e-db10ff3eb130
+x-authorization: e2f733a1-ec0b-47ff-be1b-d109551c93b4
 
 
 
