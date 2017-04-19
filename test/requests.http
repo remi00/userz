@@ -36,16 +36,16 @@ x-authorization: foooo
 
 POST http://localhost:3000/users/search
 content-type: application/json
-x-authorization: dbdea4e4-5ed7-4eaf-b3e7-808173118ae1
+x-authorization: 4c617d2b-33a3-495e-959e-db10ff3eb130
 
 {
-    "query": "xredsadam"
+    "query": "x"
 }
 
 ####
 
 PUT http://localhost:3000/users/logout
-x-authorization: 3d534ef7-a737-48d5-ad91-1d8bcd6a5dc6
+x-authorization: 4c617d2b-33a3-495e-959e-db10ff3eb130
 
 
 
