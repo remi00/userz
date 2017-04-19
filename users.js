@@ -42,29 +42,36 @@ router.use((req, res, next) => {
 // define the home page route
 router.post('/register', async (req, res) => {
   const user = req.body;
-  if (user.name && user.email && user.luckyNumber && user.password) {
-    const userFile = uuid.v4();
-    const hash = crypto.createHash('sha256');
-    hash.update(user.password);
 
-    await fsp.writeJson(path.join(usersDir, `${userFile}.json`), {
-      name: user.name,
-      email: user.email,
-      luckyNumber: user.luckyNumber,
-      password: hash.digest('hex'),
-    });
-
-    // TODO: check unique!
-    userSessions.push({
-      email: user.email,
-      name: user.name,
-      luckyNumber: user.luckyNumber,
-      file: userFile,
-    });
-    res.json({ message: 'User registered' });
-  } else {
-    res.status(400).end();
+  if (!user.name || !user.email || !user.luckyNumber || !user.password) {
+    return res.status(400).json({ message: 'Missing required parameter(s)' });
   }
+
+  if (userSessions.find(s => s.email === user.email)) {
+    return res.status(400).json({ message: 'Duplicate email' });
+  }
+  if (userSessions.find(s => s.luckyNumber === user.luckyNumber)) {
+    return res.status(400).json({ message: 'Duplicate lucky number' });
+  }
+
+  const userFile = uuid.v4();
+  const hash = crypto.createHash('sha256');
+  hash.update(user.password);
+
+  await fsp.writeJson(path.join(usersDir, `${userFile}.json`), {
+    name: user.name,
+    email: user.email,
+    luckyNumber: user.luckyNumber,
+    password: hash.digest('hex'),
+  });
+
+  userSessions.push({
+    email: user.email,
+    name: user.name,
+    luckyNumber: user.luckyNumber,
+    file: userFile,
+  });
+  res.json({ message: 'User registered' });
 });
 
 router.post('/login', async (req, res) => {
