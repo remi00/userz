@@ -10,12 +10,6 @@ const router = express.Router();
 
 const usersDir = './users';
 
-passport.use(new BasicStrategy(
-  (userid, password, done) => {
-    // check users files contents
-    // verify if we have user there...
-  }));
-
 // this relies on nodejs' caching mechanism for dependencies resolved with require()
 // ie. we know it is executed only once, if this module was required multiple times
 let userSessions = null;
@@ -50,9 +44,11 @@ router.post('/register', async (req, res) => {
   if (userSessions.find(s => s.email === user.email)) {
     return res.status(400).json({ message: 'Duplicate email' });
   }
+
   if (userSessions.find(s => s.luckyNumber === user.luckyNumber)) {
     return res.status(400).json({ message: 'Duplicate lucky number' });
   }
+
 
   const userFile = uuid.v4();
   const hash = crypto.createHash('sha256');
@@ -71,7 +67,7 @@ router.post('/register', async (req, res) => {
     luckyNumber: user.luckyNumber,
     file: userFile,
   });
-  res.json({ message: 'User registered' });
+  return res.json({ message: 'User registered' });
 });
 
 router.post('/login', async (req, res) => {
@@ -91,18 +87,13 @@ router.post('/login', async (req, res) => {
           return res.status(200).json({ message: 'Logged in', session: sessionId });
         }
       } catch (err) {
-        console.log(err)
+        console.log(err);
         return res.status(400).end();
       }
-    } else {
-      console.log('user not found');
-      console.log('userSessions: ', userSessions);
     }
   }
   return res.status(403).end();
 });
-
-
 
 router.post('/search', async (req, res) => {
   const auth = req.headers['x-authorization'];
@@ -110,39 +101,32 @@ router.post('/search', async (req, res) => {
   if (!query) {
     return res.status(400).end();
   }
-  if (userSessions) {
-    const userSessionIndex = userSessions.findIndex(s => s.session === auth);
-    if (userSessionIndex === -1) {
-      return res.status(403).end();
-    }
+
+  const userSessionIndex = userSessions.findIndex(s => s.session === auth);
+  if (userSessionIndex === -1) {
+    return res.status(403).end();
   }
-  const result = userSessions.filter((s) => {
-    if ((s.email && s.email.includes(query)) || (s.name && s.name.includes(query))) {
-      return true;
-    }
-    return false;
-  }).map(s => ({
-    name: s.name,
-    email: s.email,
-    uuid: s.file,
-    points: 0,
-  }));
+
+  const result =
+    userSessions
+    .filter(s =>
+      ((s.email && s.email.includes(query)) || (s.name && s.name.includes(query))))
+    .map(s => ({
+      name: s.name,
+      email: s.email,
+      uuid: s.file,
+      points: 0,
+    }));
   return res.json(result);
 });
 
 
 router.put('/logout', async (req, res) => {
   const auth = req.headers['x-authorization'];
-  if (userSessions) {
-    const userSessionIndex = userSessions.findIndex(s => s.session === auth);
-    if (userSessionIndex >= 0 && userSessions[userSessionIndex].email) {
-      delete userSessions[userSessionIndex];
-      return res.status(200).end();
-    }
-    else {
-      console.log('user not found');
-      console.log('userSessions: ', userSessions);            
-    }
+  const userSessionIndex = userSessions.findIndex(s => s.session === auth);
+  if (userSessionIndex >= 0 && userSessions[userSessionIndex].email) {
+    delete userSessions[userSessionIndex];
+    return res.status(200).end();
   }
   return res.status(404).end();
 });
